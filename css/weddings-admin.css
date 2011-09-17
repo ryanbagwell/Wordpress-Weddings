@@ -1,0 +1,47 @@
+#edit-slug-box {
+  display: none;
+}
+
+#mailing-address label {
+  display: inline-block;
+  width: 100px;
+  
+}
+
+#mailing-address input {
+  width: 400px;
+}
+
+#mailing-address .field-wrapper, #guests .field-wrapper {
+  margin: 10px 0;
+} 
+
+.add-guest-form {
+  display: none;
+}
+
+.add-guest-form input {
+  height: 32px;
+  line-height: 15px;
+  padding: 3px 8px;
+  display: inline-block;
+  width: 210px;  
+}
+
+.add-guest-form input.new {
+  color: #D6D4D4;
+  font-style: italic;
+}
+
+.add-guest-form select {
+  margin: 0;
+  width: 55px;
+}
+
+.add-guest-form select option {
+  height: 100%;
+}
+
+#add-guest-link {
+  cursor: pointer;  
+}
