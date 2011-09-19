@@ -24,11 +24,13 @@ class WPWeddings {
         
         add_role('wedding_guest','Wedding Guest');
         
+        add_filter('manage_posts_columns',array($this,'add_list_view_columns'));
+        
+        add_filter('manage_posts_custom_column',array($this,'add_list_view_column_values'));
           
 	}
 	
-	
-	
+
 	
     function create_post_type() {
 
@@ -115,11 +117,7 @@ class WPWeddings {
         $sql = "SELECT user_id FROM $wpdb->prefix"."usermeta WHERE meta_key = '_wedding_party' AND meta_value = '$post->ID'";
         
         $guests = $wpdb->get_results($sql);
-        
-        
-        
 
-            
         require_once(dirname(__FILE__).'/inc/guests-meta-box.php');
 
         echo "<div class='field-wrapper'><a id='add-guest-link'>add a guest</a></div>";
@@ -249,6 +247,51 @@ class WPWeddings {
     
         return implode($code);
     
+    }
+    
+    function add_list_view_columns($columns) {
+        
+        unset($columns['date']);
+        
+        $new_columns = array(
+            'title' => 'Name',
+            'guests' => 'Guests',
+            'address' => 'Address',
+            'city' => 'City',
+            'state' => 'State',
+            'zip' => 'ZIP',
+            'email' => 'Email',
+        );
+            
+        return array_merge($columns,$new_columns);
+            
+    }
+
+
+    function add_list_view_column_values($name) {
+        global $post,$wpdb;
+        
+        $values = array(
+            'address' => '_guest_party_address1',
+            'city' => '_guest_party_city',
+            'state' => '_guest_party_state',
+            'zip' => '_guest_party_zip',
+            'email'=>'_guest_party_email',
+        );
+        
+        if (array_key_exists($name,$values))
+            echo get_post_meta($post->ID,$values[$name],true);
+        
+        if ($name == 'guests') {
+            
+            $sql = "SELECT count(meta_key) as count FROM $wpdb->prefix"."usermeta WHERE meta_key = '_wedding_party' AND meta_value = '$post->ID'";
+
+            $guests = $wpdb->get_results($sql);
+            echo $guests[0]->count;
+            
+        }
+            
+        
     }
 
 }
