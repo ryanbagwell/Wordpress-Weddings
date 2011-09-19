@@ -25,6 +25,8 @@ foreach($guests as $guest):
         <option value="Mr.">Mr.</option>
         <option value="Mrs.">Mrs.</option>
         <option value="Ms.">Ms.</option>
+        <option value="Miss">Miss</option>
+        <option value="Master">Master</option>
     </select>
 
     <input type="text" class="new" rel="First Name" name="_new_guest_first_name-1" value="First Name" />

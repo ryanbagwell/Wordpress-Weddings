@@ -31,8 +31,6 @@ class WPWeddings {
         add_action('restrict_manage_posts',array($this,'add_guests_filter'));
         
         add_filter('request',array($this,'modify_request_for_filter'));
-        
-        //add_filter()
           
 	}
 	
@@ -69,17 +67,17 @@ class WPWeddings {
         $labels = array(
             'name' => 'Wedding Guests',
             'singular_name' => 'Wedding Guest',
-            'add_new' => 'Add New Guest',
+            'add_new' => 'New Guest Party',
             'add_new_item' => 'Add a New Guest',
             'edit_item' => 'Edit Guest',
             'new_item' => 'New Guest',
-            'all_items' => 'All Guests',
+            'all_items' => 'Guest Parties',
             'view_item' => 'View Guests',
             'search_items' => 'Search ',
             'not_found' => 'No guests found',
             'not_found_in_trash' => 'No guests found in Trash',
             'parent_item_colon' => '',
-            'menu_name' => 'Weddings'
+            'menu_name' => 'Guests'
         );
                   
           $args = array(
