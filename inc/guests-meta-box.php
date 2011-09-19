@@ -14,9 +14,10 @@ foreach($guests as $guest):
         <td><?php echo $guest->user_email; ?></td>
         </tr>
 <?php endforeach; ?>
-</table>
+
 <?php endif; ?>
 
+</table>
 
 <div class="field-wrapper add-guest-form">    
     <select name="_new_guest_title-1">
