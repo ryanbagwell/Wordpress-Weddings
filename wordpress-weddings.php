@@ -29,6 +29,10 @@ class WPWeddings {
         add_filter('manage_wedding_guests_posts_custom_column',array($this,'add_list_view_column_values'));
         
         add_action('restrict_manage_posts',array($this,'add_guests_filter'));
+        
+        add_filter('request',array($this,'modify_request_for_filter'));
+        
+        //add_filter()
           
 	}
 	
@@ -306,12 +310,33 @@ class WPWeddings {
              $args = array(
                  'show_option_all' => "Show All Groups",
                  'taxonomy' => 'wedding-groups',
-                 'name' => 'wedding-groups'
-
+                 'name' => 'wedding-groups',
+                 'hierarchical'=>true,
+                 'selected'=>$_GET['wedding-groups'],
+                 'depth'=>10,
+                 'show_count'=>true,
              );
 			wp_dropdown_categories($args);
         }
 	}
+	
+    //modifys the http request so it filters by wedding group name
+    function modify_request_for_filter($request) {
+        
+        if (!is_admin())
+            return $request;
+        
+        if (!isset($request['post_type']))
+            return $request;
+         
+        if ($GLOBALS['PHP_SELF'] == '/wp-admin/edit.php' && $request['post_type'] == 'wedding_guests') {
+              
+            $term = get_term($request['wedding-groups'],'wedding-groups');
+            $request['wedding-groups'] = $term->slug;
+        
+         }
+     return $request;
+    }
 
 
 }
