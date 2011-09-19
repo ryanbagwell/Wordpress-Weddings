@@ -25,7 +25,7 @@
   line-height: 15px;
   padding: 3px 8px;
   display: inline-block;
-  width: 210px;  
+  width: 28%px;  
 }
 
 .add-guest-form input.new {
@@ -44,4 +44,9 @@
 
 #add-guest-link {
   cursor: pointer;  
+}
+
+.weddings-list {
+  width: 100%;
+  line-height: 25px;
 }

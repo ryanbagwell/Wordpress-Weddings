@@ -4,7 +4,6 @@ jQuery(document).ready(function($) {
        if ($(this).val() == $(this).attr('rel')) {
            $(this).removeClass('new').val('');
        }
-       $(this).removeClass('new').val('');
    });
    
    $('.add-guest-form input').blur(function() {
@@ -43,6 +42,14 @@ jQuery(document).ready(function($) {
           
    });
    
+   //clear the name form before submitting
+   $('form').submit(function() {
+       $('.add-guest-form input').each(function() {
+           if ($(this).val() == $(this).attr('rel')) {
+               $(this).val('');
+        }
+    });
        
-    
+   });
+   
 });
