@@ -24,9 +24,11 @@ class WPWeddings {
         
         add_role('wedding_guest','Wedding Guest');
         
-        add_filter('manage_posts_columns',array($this,'add_list_view_columns'));
+        add_filter('manage_wedding_guests_posts_columns',array($this,'add_list_view_columns'));
         
-        add_filter('manage_posts_custom_column',array($this,'add_list_view_column_values'));
+        add_filter('manage_wedding_guests_posts_custom_column',array($this,'add_list_view_column_values'));
+        
+        add_action('restrict_manage_posts',array($this,'add_guests_filter'));
           
 	}
 	
@@ -293,6 +295,24 @@ class WPWeddings {
             
         
     }
+    
+    
+
+    //adds a filter dropdown list to the custom post type
+	function add_guests_filter() {
+		global $typenow;
+
+		if ($typenow=='wedding_guests'){
+             $args = array(
+                 'show_option_all' => "Show All Groups",
+                 'taxonomy' => 'wedding-groups',
+                 'name' => 'wedding-groups'
+
+             );
+			wp_dropdown_categories($args);
+        }
+	}
+
 
 }
 
