@@ -25,7 +25,7 @@ jQuery(document).ready(function($) {
             
             //update the field name id numbers
             $('.add-guest-form').each(function(i) {
-                var indexCount = i;
+                var indexCount = i+1;
                 $(this).find('input, select').each(function() {
                     var name = $(this).attr('name').split('-');
                     $(this).attr('name',name[0] + '-' + indexCount);

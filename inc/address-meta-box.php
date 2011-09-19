@@ -1,57 +1,9 @@
 <?php
-
-$state_list = array('AL'=>"Alabama",
-                'AK'=>"Alaska", 
-                'AZ'=>"Arizona", 
-                'AR'=>"Arkansas", 
-                'CA'=>"California", 
-                'CO'=>"Colorado", 
-                'CT'=>"Connecticut", 
-                'DE'=>"Delaware", 
-                'DC'=>"District Of Columbia", 
-                'FL'=>"Florida", 
-                'GA'=>"Georgia", 
-                'HI'=>"Hawaii", 
-                'ID'=>"Idaho", 
-                'IL'=>"Illinois", 
-                'IN'=>"Indiana", 
-                'IA'=>"Iowa", 
-                'KS'=>"Kansas", 
-                'KY'=>"Kentucky", 
-                'LA'=>"Louisiana", 
-                'ME'=>"Maine", 
-                'MD'=>"Maryland", 
-                'MA'=>"Massachusetts", 
-                'MI'=>"Michigan", 
-                'MN'=>"Minnesota", 
-                'MS'=>"Mississippi", 
-                'MO'=>"Missouri", 
-                'MT'=>"Montana",
-                'NE'=>"Nebraska",
-                'NV'=>"Nevada",
-                'NH'=>"New Hampshire",
-                'NJ'=>"New Jersey",
-                'NM'=>"New Mexico",
-                'NY'=>"New York",
-                'NC'=>"North Carolina",
-                'ND'=>"North Dakota",
-                'OH'=>"Ohio", 
-                'OK'=>"Oklahoma", 
-                'OR'=>"Oregon", 
-                'PA'=>"Pennsylvania", 
-                'RI'=>"Rhode Island", 
-                'SC'=>"South Carolina", 
-                'SD'=>"South Dakota",
-                'TN'=>"Tennessee", 
-                'TX'=>"Texas", 
-                'UT'=>"Utah", 
-                'VT'=>"Vermont", 
-                'VA'=>"Virginia", 
-                'WA'=>"Washington", 
-                'WV'=>"West Virginia", 
-                'WI'=>"Wisconsin", 
-                'WY'=>"Wyoming");
-
+$states = array( "AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC",  
+      "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA",  
+      "MA", "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE",  
+      "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "RI", "SC",  
+      "SD", "TN", "TX", "UT", "VA", "VT", "WA", "WI", "WV", "WY");
 ?>
 
 <div class="field-wrapper">
@@ -73,9 +25,9 @@ $state_list = array('AL'=>"Alabama",
 <div class="field-wrapper">
     <label for="">State</label>
     <select name="_guest_party_state">
-        <?php foreach ($state_list as $abbrev=>$name) {
-            $selected = (get_post_meta($post->ID,'_guest_party_state',true) == $abbrev)?'selected="selected"':'';
-            echo "<option value='$abbrev' $selected>$abbrev</option>";
+        <?php foreach ($states as $state) {
+            $selected = (get_post_meta($post->ID,'_guest_party_state',true) == $state)?'selected="selected"':'';
+            echo "<option value='$state' $selected>$state</option>";
         }
         ?>
     </select>

@@ -184,8 +184,12 @@ class WPWeddings {
                         
         $password = $this->get_random_string(10);
         
-        if ($_POST['email'] == '')
+        if ($_POST["_new_guest_email-$i"] == '') {
             $email = "$username@nothing.com";
+        } else {
+            $email = $_POST["_new_guest_email-$i"];
+        }
+            
         
         return wp_insert_user(array(
             'user_login' => $username, 
