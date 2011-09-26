@@ -31,6 +31,8 @@ class WPWeddings {
         add_action('restrict_manage_posts',array($this,'add_guests_filter'));
         
         add_filter('request',array($this,'modify_request_for_filter'));
+        
+        add_action('admin_menu', array($this,'add_export_submenu_page'));
           
 	}
 	
@@ -336,6 +338,17 @@ class WPWeddings {
      return $request;
     }
 
+
+    function add_export_submenu_page() {
+        
+        add_submenu_page('edit.php?post_type=wedding_guests','Export Guests','Export Guests','manage_options', 'export-guests',array($this,'print_export_submenu_page'));        
+    }
+
+    function print_export_submenu_page() {
+        
+        require_once('inc/export.php');
+        
+    }
 
 }
 
