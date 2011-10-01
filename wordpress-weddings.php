@@ -382,6 +382,8 @@ class WPWeddings {
 
     
     function export_guests() {
+        global $wpdb;
+        
         
         if ($_REQUEST['page'] != 'export-guests')
             return;
@@ -395,7 +397,9 @@ class WPWeddings {
             'City',
             'State',
             'ZIP',
-            'Email',    
+            'Email',
+            'Guest Count',
+            'Login Token',    
         );
                 
         $categories = get_terms('wedding-groups',array('hide_empty'=>false));
@@ -410,8 +414,19 @@ class WPWeddings {
         $csv = "\"$headings\"\n";
         
         
-        //get all wedding parties
-        $parties = get_posts(array('post_type'=>'wedding_guests','numberposts'=>10000000));
+        //get all wedding parties using a custom query to count the guests in each party
+        $sql = "SELECT p.*, (
+           SELECT COUNT(umeta_id)
+           FROM $wpdb->prefix"."usermeta um 
+           WHERE  um.meta_key = '_wedding_party' 
+           AND um.meta_value = p.ID  
+        ) as guest_count 
+        FROM $wpdb->prefix"."posts as p 
+        WHERE post_type = 'wedding_guests' 
+        AND post_status = 'publish'";
+        
+        $parties = $wpdb->get_results($sql);
+
         
         //assign the post meta to each party
         foreach($parties as $party) {
@@ -422,6 +437,10 @@ class WPWeddings {
                 $party->$field = get_post_meta($party->ID,$field,true);
                 $details[] = $party->$field;
             }
+            
+            //also add the guest count and token
+            $details[] = $party->guest_count;
+            $details[] = get_post_meta($party->ID,'_guest_party_token',true); 
                                     
             //add the category data too
             foreach($categories as $cat) {
