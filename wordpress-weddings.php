@@ -33,6 +33,10 @@ class WPWeddings {
         
         add_action('admin_menu', array($this,'add_export_submenu_page'));
         
+        add_action('admin_menu', array($this,'add_print_guests_submenu_page'));
+        
+        
+        
         //an array of party meta fields
         $this->party_fields = array(
             '_guest_party_address1',
@@ -346,13 +350,65 @@ class WPWeddings {
         add_submenu_page('edit.php?post_type=wedding_guests','Export Guest Parties','Export Guest Parties','manage_options', 'export-guests',array($this,'print_export_submenu_page'));        
     }
 
+    function add_print_guests_submenu_page() {
+
+        add_submenu_page('edit.php?post_type=wedding_guests','Print Guest Parties','Print Guest Parties','manage_options', 'print-guest-parties',array($this,'print_guest_parties_page'));
+        
+    }
+    
+    
+    function print_guest_parties_page() {
+        
+        //get all wedding parties
+        $parties = get_posts(array('post_type'=>'wedding_guests','numberposts'=>10000000));
+        
+        //assign the post meta to each party
+        foreach($parties as $party) {
+
+            $details = array($party->post_title);
+
+            foreach($this->party_fields as $field) {
+                $party->$field = get_post_meta($party->ID,$field,true);
+            }
+
+            //add the meta_fields to each parties_object so we can loop over them in the view
+            $party->fields = $this->party_fields;
+        }        
+
+        
+        require_once('inc/guest-parties.php');
+        
+    }
+
     
     function export_guests() {
         
         if ($_REQUEST['page'] != 'export-guests')
             return;
         
-        $csv = '"Party Name","Address 1","Address 2","City","State","ZIP","Email"'."\n";
+        
+        //add the categories to the column names
+        $column_headings = array(
+            'Party Name',
+            'Address 1',
+            'Address 1',
+            'City',
+            'State',
+            'ZIP',
+            'Email',    
+        );
+                
+        $categories = get_terms('wedding-groups',array('hide_empty'=>false));
+                
+        foreach($categories as $cat) {
+            //escape double quotes
+            $column_headings[] = str_replace('"','""',$cat->name);            
+        }
+        
+        $headings = implode($column_headings,'","');
+        
+        $csv = "\"$headings\"\n";
+        
         
         //get all wedding parties
         $parties = get_posts(array('post_type'=>'wedding_guests','numberposts'=>10000000));
@@ -365,6 +421,17 @@ class WPWeddings {
             foreach($this->party_fields as $field) {
                 $party->$field = get_post_meta($party->ID,$field,true);
                 $details[] = $party->$field;
+            }
+                                    
+            //add the category data too
+            foreach($categories as $cat) {
+                if (has_term($cat->term_id,'wedding-groups',$party->ID)):
+                    $details[] = "X";
+                else:
+                    $details[] = "";
+                endif;
+                
+                
             }
             
             $details = implode($details,'","');
