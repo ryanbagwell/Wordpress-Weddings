@@ -355,7 +355,7 @@ class WPWeddings {
         $csv = '"Name","Address 1","Address 2","City","State","ZIP","Email"'."\n";
         
         //get all wedding parties
-        $parties = get_posts(array('post_type'=>'wedding_guests'));
+        $parties = query_posts(array('post_type'=>'wedding_guests'));
         
         //assign the post meta to each party
         foreach($parties as $party) {
