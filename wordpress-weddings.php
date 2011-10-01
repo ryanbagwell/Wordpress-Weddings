@@ -426,10 +426,14 @@ class WPWeddings {
         AND post_status = 'publish'";
         
         $parties = $wpdb->get_results($sql);
-
         
+        //a placeholder to hold our total guest count
+        $total_guests = 0;
+
         //assign the post meta to each party
         foreach($parties as $party) {
+
+            $total_guests += $party->guest_count;
 
             $details = array($party->post_title);
 
@@ -457,6 +461,12 @@ class WPWeddings {
             $csv .= "\"$details\"\n";
             
         }
+        
+        //total the guest count
+        $csv .= "\n";
+        $csv .= "\"Total Parties\",\"".count($parties)."\"\n";
+        $csv .= "\"Total Guests\",\"$total_guests\"\n";
+        
         
         header("Content-type: application/octet-stream");
         header("Content-Disposition: attachment; filename=\"guest-parties.csv\"");
