@@ -13,8 +13,7 @@ License: GPL2
 class WPWeddings {
 	
 	public $token_length = 6;
-	
-	
+		
 	function WPWeddings() {
         $this->create_post_type(); 
         
@@ -33,6 +32,18 @@ class WPWeddings {
         add_filter('request',array($this,'modify_request_for_filter'));
         
         add_action('admin_menu', array($this,'add_export_submenu_page'));
+        
+        //an array of party meta fields
+        $this->party_fields = array(
+            '_guest_party_address1',
+            '_guest_party_address2',
+            '_guest_party_city',
+            '_guest_party_state',
+            '_guest_party_zip',
+            '_guest_party_email',           
+        );
+        
+        $this->export_guests();
           
 	}
 	
@@ -141,17 +152,8 @@ class WPWeddings {
 
     
     function save_guest_details($post_id) {
-        
-        $fields = array(
-            '_guest_party_address1',
-            '_guest_party_address2',
-            '_guest_party_city',
-            '_guest_party_state',
-            '_guest_party_zip',
-            '_guest_party_email',           
-        );
-        
-        foreach($fields as $field) {
+                
+        foreach($this->party_fields as $field) {
             $result = update_post_meta($post_id,$field,$_POST[$field]);
         }
        
@@ -341,12 +343,40 @@ class WPWeddings {
 
     function add_export_submenu_page() {
         
-        add_submenu_page('edit.php?post_type=wedding_guests','Export Guests','Export Guests','manage_options', 'export-guests',array($this,'print_export_submenu_page'));        
+        add_submenu_page('edit.php?post_type=wedding_guests','Export Guest Parties','Export Guest Parties','manage_options', 'export-guests',array($this,'print_export_submenu_page'));        
     }
 
-    function print_export_submenu_page() {
+    
+    function export_guests() {
         
-        require_once('inc/export.php');
+        if ($_REQUEST['page'] != 'export-guests')
+            return;
+        
+        $csv = '"Name","Address 1","Address 2","City","State","ZIP","Email"'."\n";
+        
+        //get all wedding parties
+        $parties = get_posts(array('post_type'=>'wedding_guests'));
+        
+        //assign the post meta to each party
+        foreach($parties as $party) {
+
+            $details = array($party->post_title);
+
+            foreach($this->party_fields as $field) {
+                $party->$field = get_post_meta($party->ID,$field,true);
+                $details[] = $party->$field;
+            }
+            
+            $details = implode($details,'","');
+            $csv .= "\"$details\"\n";
+            
+        }
+        
+        header("Content-type: application/octet-stream");
+        header("Content-Disposition: attachment; filename=\"member-signups.csv\"");
+        
+        echo $csv;
+        die();
         
     }
 
