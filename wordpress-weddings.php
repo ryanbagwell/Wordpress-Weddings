@@ -352,10 +352,10 @@ class WPWeddings {
         if ($_REQUEST['page'] != 'export-guests')
             return;
         
-        $csv = '"Name","Address 1","Address 2","City","State","ZIP","Email"'."\n";
+        $csv = '"Party Name","Address 1","Address 2","City","State","ZIP","Email"'."\n";
         
         //get all wedding parties
-        $parties = get_posts(array('post_type'=>'wedding_guests','numberposts'=>0));
+        $parties = get_posts(array('post_type'=>'wedding_guests','numberposts'=>10000000));
         
         //assign the post meta to each party
         foreach($parties as $party) {
