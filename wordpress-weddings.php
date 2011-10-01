@@ -373,7 +373,7 @@ class WPWeddings {
         }
         
         header("Content-type: application/octet-stream");
-        header("Content-Disposition: attachment; filename=\"member-signups.csv\"");
+        header("Content-Disposition: attachment; filename=\"guest-parties.csv\"");
         
         echo $csv;
         die();
