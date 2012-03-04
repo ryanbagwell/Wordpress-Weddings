@@ -13,8 +13,15 @@ License: GPL2
 class WPWeddings {
 	
 	public $token_length = 6;
+	public $controller = null;
 		
 	function WPWeddings() {
+	    
+	    $this->controller = $this->get_controller();
+	    
+        // var_dump($this->controller);
+        // die();
+	    	    
         $this->create_post_type(); 
         
         add_action('admin_print_styles',array('WPWeddings','print_stylesheets'));
@@ -24,8 +31,7 @@ class WPWeddings {
         add_role('wedding_guest','Wedding Guest');
         
         add_filter('manage_wedding_guests_posts_columns',array($this,'add_list_view_columns'));
-        
-        add_filter('manage_wedding_guests_posts_custom_column',array($this,'add_list_view_column_values'));
+         add_filter('manage_wedding_guests_posts_custom_column',array($this,'add_list_view_column_values'));
         
         add_action('restrict_manage_posts',array($this,'add_guests_filter'));
         
@@ -35,7 +41,7 @@ class WPWeddings {
         
         add_action('admin_menu', array($this,'add_print_guests_submenu_page'));
         
-        
+        add_filter('template_include',array($this,'rsvp'));
         
         //an array of party meta fields
         $this->party_fields = array(
@@ -44,7 +50,7 @@ class WPWeddings {
             '_guest_party_city',
             '_guest_party_state',
             '_guest_party_zip',
-            '_guest_party_email',           
+            '_guest_party_email',      
         );
         
         $this->export_guests();
@@ -393,11 +399,12 @@ class WPWeddings {
         $column_headings = array(
             'Party Name',
             'Address 1',
-            'Address 1',
+            'Address 2',
             'City',
             'State',
             'ZIP',
             'Email',
+            'RSVP Names',
             'Guest Count',
             'Login Token',    
         );
@@ -415,17 +422,54 @@ class WPWeddings {
         
         
         //get all wedding parties using a custom query to count the guests in each party
-        $sql = "SELECT p.*, (
-           SELECT COUNT(umeta_id)
-           FROM $wpdb->prefix"."usermeta um 
-           WHERE  um.meta_key = '_wedding_party' 
-           AND um.meta_value = p.ID  
-        ) as guest_count 
+        
+        // $sql = "SELECT first_name from $wpdb->prefix"."usermeta 
+        // WHERE  um.meta_key = '_wedding_party' 
+        // AND um.meta_value = p.ID";
+
+        // $sql = "SELECT p.*, (
+        //            SELECT COUNT(umeta_id)
+        //            FROM $wpdb->prefix"."usermeta um 
+        //            WHERE  um.meta_key = '_wedding_party' 
+        //            AND um.meta_value = p.ID  
+        //         ) as guest_count 
+        //         FROM $wpdb->prefix"."posts as p 
+        //         WHERE post_type = 'wedding_guests' 
+        //         AND post_status = 'publish'";
+                
+        
+        $sql = "SELECT p.*,
+            (
+            SELECT 
+                GROUP_CONCAT(
+                    (SELECT meta_value 
+                        FROM $wpdb->prefix"."usermeta 
+                        WHERE meta_key = 'first_name' 
+                        AND user_id = um.user_id
+                    )
+                ) as first_name 
+                FROM $wpdb->prefix"."usermeta um
+                WHERE meta_key = '_wedding_party' 
+                AND meta_value = p.ID 
+            ) as first_names, 
+            (
+            SELECT COUNT(umeta_id) 
+            FROM $wpdb->prefix"."usermeta um 
+            WHERE  um.meta_key = '_wedding_party' 
+            AND um.meta_value = p.ID  
+            ) as guest_count             
+               
         FROM $wpdb->prefix"."posts as p 
         WHERE post_type = 'wedding_guests' 
         AND post_status = 'publish'";
         
         $parties = $wpdb->get_results($sql);
+        
+        // echo "<pre>";
+        // var_dump($parties);
+        // echo "</pre>";
+        // 
+        // die('ahhhh');
         
         //a placeholder to hold our total guest count
         $total_guests = 0;
@@ -442,9 +486,12 @@ class WPWeddings {
                 $details[] = $party->$field;
             }
             
+            //add the first_names field
+            $details[] = $party->first_names;
+            
             //also add the guest count and token
             $details[] = $party->guest_count;
-            $details[] = get_post_meta($party->ID,'_guest_party_token',true); 
+            $details[] = get_post_meta($party->ID,'_guest_party_token',true);
                                     
             //add the category data too
             foreach($categories as $cat) {
@@ -476,6 +523,80 @@ class WPWeddings {
         
     }
 
+
+    function login() {
+        
+        $code = $_POST['reservation_code'];
+        
+        $query = new WP_Query("meta_value=$code&post_type=wedding_guests");
+                
+        if (count($query->posts) > 0) {
+            $_SESSION['rsvp_token'] = $code;
+            $_SESSION['wedding_party'] = $query->posts[0];
+            $_SESSION['party_members'] = $this->get_party_members($query->posts[0]->ID);
+            return true;
+        } else {
+            $_SESSION['message'] = "Sorry, that RSVP code wasn't found. Please check your code and try again.";
+            header('Location: '.site_url().'rsvp/');
+            return false;
+        }        
+    }
+
+
+    function get_controller() {
+        global $wp;
+        
+        if ($wp->request == 'rsvp/login')
+            return 'login';
+        
+        if ($wp->request == 'rsvp/respond')
+            return 'respond';
+            
+        return null;
+    }
+
+
+    function rsvp($var1) {
+        global $wp, $template;
+
+        if ($_SESSION['rsvp_token'])
+            header('Location: '.site_url().'rsvp/respond/');
+
+        if ($wp->request == 'rsvp')
+            return dirname(__FILE__)."/views/rsvp.php";
+            
+        if ($wp->request == 'rsvp/respond')
+            return dirname(__FILE__)."/views/edit.php";
+                        
+        // if ($wp->request == 'rsvp')
+        //     return dirname(__FILE__)."/views/rsvp.php";
+        //         
+        // $status = $this->login();
+        // 
+        // if ($wp->request == 'rsvp/login' && $status)
+        //     return dirname(__FILE__)."/views/edit.php";
+        //     
+        // if (!$status)
+        //     return dirname(__FILE__)."/views/rsvp.php";
+            
+        return $template;
+
+    }
+    
+ 
+    
+
+    
+    //gets all users who are members of the given party
+    function get_party_members($party_id = null) {
+        
+        if (is_null($party_id))
+            return;
+            
+        return new WP_User_Query("meta_key=_wedding_party&meta_value=$party_id");
+    }
+    
+    
 }
 
 function start_wp_weddings() {
