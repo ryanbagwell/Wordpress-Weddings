@@ -462,11 +462,16 @@ class WPWeddings {
             
             //add the first_names field
             $names = explode(',',$party->first_names);
-            $first_names = implode(', ',array_slice($names,0,count($names)-2));
-            $first_names .= ' and ' . $names[count($names) - 1];
-            $details[] = $first_names;
             
-            $details[] = $party->first_names;
+            if (count($names) > 2):
+                $details[] = implode(', ',array_slice($names,0,count($names)-2)) . ' and ' . $names[count($names) - 1];
+            elseif (count($names) == 2):
+                $details[] = implode(' and ',$names);
+            elseif (count($names) === 1):
+                $details[] = $names[0];
+            else:
+                $details[] = '';
+            endif;
             
             //also add the guest count and token
             $details[] = $party->guest_count;
@@ -551,10 +556,14 @@ class WPWeddings {
                 $_SESSION['message'] = "Sorry, that RSVP code wasn't found. Please check your code and try again.";
                 $this->view = 'login';
             }
+            
         else:
+            
             $this->view = 'login';
+        
         endif;
-    }    
+    
+    }
 
     //gets all users who are members of the given party
     function get_party_members($party_id = null) {
