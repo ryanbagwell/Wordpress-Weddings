@@ -442,11 +442,11 @@ class WPWeddings {
             (
             SELECT 
                 GROUP_CONCAT(
-                    (TRIM(SELECT meta_value 
+                    (SELECT TRIM(meta_value) 
                         FROM $wpdb->prefix"."usermeta 
                         WHERE meta_key = 'first_name' 
                         AND user_id = um.user_id
-                    )) separator ', '
+                    ) separator ', '
                 ) as first_name 
                 FROM $wpdb->prefix"."usermeta um
                 WHERE meta_key = '_wedding_party' 
