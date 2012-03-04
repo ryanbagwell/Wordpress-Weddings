@@ -13,15 +13,10 @@ License: GPL2
 class WPWeddings {
 	
 	public $token_length = 6;
-	public $controller = null;
+	public $template = null;
 		
 	function WPWeddings() {
-	    
-	    $this->controller = $this->get_controller();
-	    
-        // var_dump($this->controller);
-        // die();
-	    	    
+	    	    	    	    
         $this->create_post_type(); 
         
         add_action('admin_print_styles',array('WPWeddings','print_stylesheets'));
@@ -41,7 +36,8 @@ class WPWeddings {
         
         add_action('admin_menu', array($this,'add_print_guests_submenu_page'));
         
-        add_filter('template_include',array($this,'rsvp'));
+        add_action('template_redirect',array($this,'rsvp'));
+        add_filter('template_include',array($this,'view'));
         
         //an array of party meta fields
         $this->party_fields = array(
@@ -58,7 +54,6 @@ class WPWeddings {
 	}
 	
 
-	
     function create_post_type() {
 
         $tax_labels = array( 
@@ -423,21 +418,6 @@ class WPWeddings {
         
         //get all wedding parties using a custom query to count the guests in each party
         
-        // $sql = "SELECT first_name from $wpdb->prefix"."usermeta 
-        // WHERE  um.meta_key = '_wedding_party' 
-        // AND um.meta_value = p.ID";
-
-        // $sql = "SELECT p.*, (
-        //            SELECT COUNT(umeta_id)
-        //            FROM $wpdb->prefix"."usermeta um 
-        //            WHERE  um.meta_key = '_wedding_party' 
-        //            AND um.meta_value = p.ID  
-        //         ) as guest_count 
-        //         FROM $wpdb->prefix"."posts as p 
-        //         WHERE post_type = 'wedding_guests' 
-        //         AND post_status = 'publish'";
-                
-        
         $sql = "SELECT p.*,
             (
             SELECT 
@@ -446,7 +426,7 @@ class WPWeddings {
                         FROM $wpdb->prefix"."usermeta 
                         WHERE meta_key = 'first_name' 
                         AND user_id = um.user_id
-                    ) separator ', '
+                    ) separator ','
                 ) as first_name 
                 FROM $wpdb->prefix"."usermeta um
                 WHERE meta_key = '_wedding_party' 
@@ -481,6 +461,11 @@ class WPWeddings {
             }
             
             //add the first_names field
+            $names = explode(',',$party->first_names);
+            $first_names = implode(', ',array_slice($names,0,count($names)-2));
+            $first_names .= ' and ' . $names[count($names) - 1];
+            $details[] = $first_names;
+            
             $details[] = $party->first_names;
             
             //also add the guest count and token
@@ -518,28 +503,9 @@ class WPWeddings {
     }
 
 
-    function login() {
-        
-        $code = $_POST['reservation_code'];
-        
-        $query = new WP_Query("meta_value=$code&post_type=wedding_guests");
-                
-        if (count($query->posts) > 0) {
-            $_SESSION['rsvp_token'] = $code;
-            $_SESSION['wedding_party'] = $query->posts[0];
-            $_SESSION['party_members'] = $this->get_party_members($query->posts[0]->ID);
-            return true;
-        } else {
-            $_SESSION['message'] = "Sorry, that RSVP code wasn't found. Please check your code and try again.";
-            header('Location: '.site_url().'rsvp/');
-            return false;
-        }        
-    }
-
-
     function get_controller() {
         global $wp;
-        
+                
         if ($wp->request == 'rsvp/login')
             return 'login';
         
@@ -550,37 +516,46 @@ class WPWeddings {
     }
 
 
-    function rsvp($var1) {
+    function rsvp() {
         global $wp, $template;
 
-        if ($_SESSION['rsvp_token'])
-            header('Location: '.site_url().'rsvp/respond/');
-
-        if ($wp->request == 'rsvp')
-            return dirname(__FILE__)."/views/rsvp.php";
-            
-        if ($wp->request == 'rsvp/respond')
-            return dirname(__FILE__)."/views/edit.php";
-                        
-        // if ($wp->request == 'rsvp')
-        //     return dirname(__FILE__)."/views/rsvp.php";
-        //         
-        // $status = $this->login();
-        // 
-        // if ($wp->request == 'rsvp/login' && $status)
-        //     return dirname(__FILE__)."/views/edit.php";
-        //     
-        // if (!$status)
-        //     return dirname(__FILE__)."/views/rsvp.php";
-            
-        return $template;
-
+        $controller = $this->get_controller();
+        
+        $this->$controller();
+                    
     }
     
- 
-    
+    function view($template) {
+        
+        if (!is_null($this->template))
+            return dirname(__FILE__)."/views/$this->template.php";
+        
+        return $template; 
+        
+    }
 
-    
+    function login() {
+
+        if ($_POST):
+                
+            $code = $_POST['reservation_code'];
+        
+            $query = new WP_Query("meta_value=$code&post_type=wedding_guests");
+                
+            if (count($query->posts) > 0) {
+                $_SESSION['rsvp_token'] = $code;
+                $_SESSION['wedding_party'] = $query->posts[0];
+                $_SESSION['party_members'] = $this->get_party_members($query->posts[0]->ID);                
+                $this->view = 'respond';
+            } else {
+                $_SESSION['message'] = "Sorry, that RSVP code wasn't found. Please check your code and try again.";
+                $this->view = 'login';
+            }
+        else:
+            $this->view = 'login';
+        endif;
+    }    
+
     //gets all users who are members of the given party
     function get_party_members($party_id = null) {
         
