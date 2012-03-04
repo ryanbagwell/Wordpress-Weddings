@@ -461,10 +461,10 @@ class WPWeddings {
             }
             
             //add the first_names field
-            $names = explode(',',$party->first_names);
+            $names = explode(',',$party->first_names); 
             
             if (count($names) > 2):
-                $details[] = implode(', ',array_slice($names,0,count($names)-2)) . ' and ' . $names[count($names) - 1];
+                $details[] = implode(', ',array_slice($names,0,count($names)-1)) . ' and ' . $names[count($names) - 1];
             elseif (count($names) == 2):
                 $details[] = implode(' and ',$names);
             elseif (count($names) === 1):
