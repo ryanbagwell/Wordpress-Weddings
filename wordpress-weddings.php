@@ -442,11 +442,11 @@ class WPWeddings {
             (
             SELECT 
                 GROUP_CONCAT(
-                    (SELECT meta_value 
+                    (TRIM(SELECT meta_value 
                         FROM $wpdb->prefix"."usermeta 
                         WHERE meta_key = 'first_name' 
                         AND user_id = um.user_id
-                    )
+                    )) separator ', '
                 ) as first_name 
                 FROM $wpdb->prefix"."usermeta um
                 WHERE meta_key = '_wedding_party' 
@@ -464,13 +464,7 @@ class WPWeddings {
         AND post_status = 'publish'";
         
         $parties = $wpdb->get_results($sql);
-        
-        // echo "<pre>";
-        // var_dump($parties);
-        // echo "</pre>";
-        // 
-        // die('ahhhh');
-        
+                
         //a placeholder to hold our total guest count
         $total_guests = 0;
 
