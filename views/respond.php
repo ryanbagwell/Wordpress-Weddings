@@ -56,13 +56,13 @@ get_header();
             ?>
             <tr data-id="<?php echo $guest->ID; ?>">
                 <td class="first-name">
-                    <input class="first-name" type="text" name="first_name" value="" title="<?php echo $guest->first_name ?>" rel="First Name" />
+                    <input class="first-name" type="text" name="first_name" value="<?php echo $guest->first_name ?>" title="" rel="First Name" />
                 </td>
                 <td class="last-name">
-                    <input class="last-name" type="text" name="last_name" value="" title="<?php echo $guest->last_name ?>" rel="Last Name" />
+                    <input class="last-name" type="text" name="last_name" value="<?php echo $guest->last_name ?>" title="" rel="Last Name" />
                 </td>
                 <td class="email">
-                    <input class="email" type="text" name="email" value="" title="<?php echo $email ?>" rel="Email" />
+                    <input class="email" type="text" name="email" value="<?php echo $email ?>" title="" rel="Email" />
                 </td>
                 <td class="attending-wedding">
                     <input class="attending-wedding" type="checkbox" name="_attending_wedding" value="0" rel="Wedding attendance" <?php echo ($guest->_attending_wedding === '1')?'checked="checked"':''; ?> />
@@ -82,7 +82,7 @@ get_header();
     
     <script type="text/javascript">
         jQuery(document).ready(function($) {
-            $('input[type="text"]').setFieldTitles();
+            //$('input[type="text"]').setFieldTitles();
         
         
             $('input').change(function() {
