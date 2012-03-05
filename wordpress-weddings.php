@@ -41,6 +41,9 @@ class WPWeddings {
         add_action('template_redirect',array($this,'rsvp'));
         add_filter('template_include',array($this,'view'));
         
+        add_action('wp_ajax_rsvp_update', array($this,'rsvp_update'));
+        add_action('wp_ajax_nopriv_rsvp_update', array($this,'rsvp_update'));
+        
         wp_enqueue_script('form-labels',plugins_url('js/',__FILE__).'jquery.setFieldTitles.js','jquery',null,true);
         
         //an array of party meta fields
@@ -54,6 +57,8 @@ class WPWeddings {
         );
         
         $this->export_guests();
+        
+        
           
 	}
 	
@@ -515,11 +520,11 @@ class WPWeddings {
         global $wp;
         
         $parsed = explode('/',$wp->request);
-        
+                
         if (!$parsed[0] == 'rsvp')
             return;
             
-        return $parsed[1];
+        return ($parsed[1])?$parsed[1]:null;
         
     }
 
@@ -528,8 +533,8 @@ class WPWeddings {
         global $wp, $template;
 
         $controller = $this->get_controller();
-        
-        if (!is_null($this->controller))
+
+        if (!is_null($controller))
             $this->$controller();
                     
     }
@@ -544,29 +549,23 @@ class WPWeddings {
     }
 
     function login() {
-        
-        if (isset($_SESSION['rsvp_party']))
-            wp_redirect(site_url().'/rsvp/respond/');
+   
+        // if (isset($_SESSION['reservation_code']))
+        //     wp_redirect(site_url().'/rsvp/respond/');
+   
+        $_SESSION['message'] = '';
+   
         
         if ($_POST):
-                
             $code = $_POST['reservation_code'];
-                                
-            $query = new WP_Query(array(
-                'meta_query'=>array(
-                    array(
-                        'key'=>'_guest_party_token',
-                        'value'=>$code
-                        ),
-                ),
-                'post_type'=>'wedding_guests',
-            ));
-            
-                
-            if (count($query->posts) > 0) {
-                $this->set_party_details($query->posts[0]);
-                wp_redirect(site_url().'/rsvp/respond/');
 
+            // var_dump($this->get_party_details($code));
+            // die();
+            
+            if ($this->get_party_details($code)) {
+                $_SESSION['reservation_code'] = $code;
+                
+                wp_redirect(site_url().'/rsvp/respond/');                                 
             } else {
                 $_SESSION['message'] = "Sorry, that RSVP code wasn't found. Please check your code and try again.";
                 $this->template = 'login';
@@ -580,48 +579,62 @@ class WPWeddings {
     
     }
     
-    function set_party_details($query = null) {
+    function get_party_details($reservation_code = '') {
         
-        if (isset($_SESSION['party'])) {
-            $this->party = $_SESSION['party'];
-            return;
-        }
+        // var_dump($reservation_code);
+        // die();
         
-        $meta = get_post_meta($query->ID,null);
-            
+        if ($reservation_code == '')
+            return false;
+
+        $query = new WP_Query(array(
+            'meta_query'=>array(
+                array(
+                    'key'=>'_guest_party_token',
+                    'value'=>$code
+                    ),
+            ),
+            'post_type'=>'wedding_guests',
+        ));
+                
+        if (count($query->posts) === 0)
+            return false;
+        
+                   
         $details = new stdClass();
-        $details->name = $query->post_title;
-        $details->ID = $query->ID;
+        $details->name = $query->posts[0]->post_title;
+        $details->ID = $query->posts[0]->ID;
         
         $fields = array_merge($this->party_fields,array('_guest_party_token'));
                 
         foreach($fields as $field) {
-            $details->$field = get_post_meta($query->ID,$field,true);
+            $details->$field = get_post_meta($query->posts[0]->ID,$field,true);
         }
-        
-        $members = $this->get_party_members($query->ID)->results;
-        
-        // var_dump($members);
-        // die();
-        
-        foreach($members as $member) {
-            //var_dump(get_userdata($member->ID));
+                
+        $members = new WP_User_Query("meta_key=_wedding_party&meta_value=$details->ID");
+         
+        foreach($members->results as $member) { 
             
             foreach(get_userdata($member->ID) as $key=>$value) {
                 $member->$key = $value;
             }
  
         }
-                
-        $details->members = $members;
+                              
+        $details->guests = $members->results;
     
-        $this->party = $_SESSION['party'] = $details;
+        return $details;
         
     }
 
     function respond() {
-        $this->set_party_details();        
-        $this->template = 'respond';        
+                
+        if (!isset($_SESSION['reservation_code']))
+            wp_redirect(site_url().'/rsvp/login/');        
+        
+        $this->party = $this->get_party_details($_SESSION['reservation_code']);
+                      
+        $this->template = 'respond';
     }
     
     function logout() {
@@ -630,15 +643,26 @@ class WPWeddings {
         
     }
     
-    //gets all users who are members of the given party
-    function get_party_members($party_id = null) {
+    function rsvp_update() {
         
-        if (is_null($party_id))
-            return;
+        if (!$_POST)
+            die('error');
             
-        return new WP_User_Query("meta_key=_wedding_party&meta_value=$party_id");
+        if (!$_SESSION['reservation_code'])
+            die('not logged in');
+            
+        extract($_POST);
+        
+        $result = update_user_meta($id,$name,$value);
+        // var_dump($value);
+        
+        if (!$result)
+            die('error');
+        
+        die('ok');
+        
     }
-    
+        
 }
 
 function start_wp_weddings() {

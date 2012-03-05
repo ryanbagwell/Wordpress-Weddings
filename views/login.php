@@ -7,19 +7,24 @@ get_header();
 
 ?>
 
-<?php
+<div id="content" class="rsvp">
 
-if ($_SESSION['message']) {
-    echo $_SESSION['message'];
-}
+    <h1>Respond Online</h1>
 
+    <form method="post" action="/rsvp/login/" id="login-form">
+        <label>Enter the RSVP code printed on the back of your invitation<label><br />
+        <input type="text" name="reservation_code" value="" title="Reservation Code" />
+        <button type="submit">Start &raquo;</button>
+    </form>
 
-?>
+    <p style="color: red">
+    <?php
+        if ($_SESSION['message'])
+            echo $_SESSION['message'];
+    ?>
+    </p>
 
-<form method="post" action="/rsvp/login/">
-    <label>Enter Your RSVP Code<label>
-    <input type="text" name="reservation_code" value="" title="Reservation Code" />
-    <button type="submit">Go</button>
-</form>
+</div>
 
 <?php get_footer(); ?>
+
