@@ -9,6 +9,7 @@ Author URI: http://www.ryanbagwell.com
 License: GPL2
 */
 
+$wedding = null;
 
 class WPWeddings {
 	
@@ -16,6 +17,7 @@ class WPWeddings {
 	public $template = null;
 		
 	function WPWeddings() {
+	    session_start();
 	    	    	    	    
         $this->create_post_type(); 
         
@@ -38,6 +40,8 @@ class WPWeddings {
         
         add_action('template_redirect',array($this,'rsvp'));
         add_filter('template_include',array($this,'view'));
+        
+        wp_enqueue_script('form-labels',plugins_url('js/',__FILE__).'jquery.setFieldTitles.js','jquery',null,true);
         
         //an array of party meta fields
         $this->party_fields = array(
@@ -484,8 +488,7 @@ class WPWeddings {
                 else:
                     $details[] = "";
                 endif;
-                
-                
+            
             }
             
             $details = implode($details,'","');
@@ -510,14 +513,14 @@ class WPWeddings {
 
     function get_controller() {
         global $wp;
-                
-        if ($wp->request == 'rsvp/login')
-            return 'login';
         
-        if ($wp->request == 'rsvp/respond')
-            return 'respond';
+        $parsed = explode('/',$wp->request);
+        
+        if (!$parsed[0] == 'rsvp')
+            return;
             
-        return null;
+        return $parsed[1];
+        
     }
 
 
@@ -526,7 +529,8 @@ class WPWeddings {
 
         $controller = $this->get_controller();
         
-        $this->$controller();
+        if (!is_null($this->controller))
+            $this->$controller();
                     
     }
     
@@ -540,31 +544,92 @@ class WPWeddings {
     }
 
     function login() {
-
+        
+        if (isset($_SESSION['rsvp_party']))
+            wp_redirect(site_url().'/rsvp/respond/');
+        
         if ($_POST):
                 
             $code = $_POST['reservation_code'];
-        
-            $query = new WP_Query("meta_value=$code&post_type=wedding_guests");
+                                
+            $query = new WP_Query(array(
+                'meta_query'=>array(
+                    array(
+                        'key'=>'_guest_party_token',
+                        'value'=>$code
+                        ),
+                ),
+                'post_type'=>'wedding_guests',
+            ));
+            
                 
             if (count($query->posts) > 0) {
-                $_SESSION['rsvp_token'] = $code;
-                $_SESSION['wedding_party'] = $query->posts[0];
-                $_SESSION['party_members'] = $this->get_party_members($query->posts[0]->ID);                
-                $this->view = 'respond';
+                $this->set_party_details($query->posts[0]);
+                wp_redirect(site_url().'/rsvp/respond/');
+
             } else {
                 $_SESSION['message'] = "Sorry, that RSVP code wasn't found. Please check your code and try again.";
-                $this->view = 'login';
+                $this->template = 'login';
             }
             
         else:
             
-            $this->view = 'login';
+            $this->template = 'login';
         
         endif;
     
     }
+    
+    function set_party_details($query = null) {
+        
+        if (isset($_SESSION['party'])) {
+            $this->party = $_SESSION['party'];
+            return;
+        }
+        
+        $meta = get_post_meta($query->ID,null);
+            
+        $details = new stdClass();
+        $details->name = $query->post_title;
+        $details->ID = $query->ID;
+        
+        $fields = array_merge($this->party_fields,array('_guest_party_token'));
+                
+        foreach($fields as $field) {
+            $details->$field = get_post_meta($query->ID,$field,true);
+        }
+        
+        $members = $this->get_party_members($query->ID)->results;
+        
+        // var_dump($members);
+        // die();
+        
+        foreach($members as $member) {
+            //var_dump(get_userdata($member->ID));
+            
+            foreach(get_userdata($member->ID) as $key=>$value) {
+                $member->$key = $value;
+            }
+ 
+        }
+                
+        $details->members = $members;
+    
+        $this->party = $_SESSION['party'] = $details;
+        
+    }
 
+    function respond() {
+        $this->set_party_details();        
+        $this->template = 'respond';        
+    }
+    
+    function logout() {
+        session_destroy();
+        wp_redirect(site_url().'/rsvp/login/');
+        
+    }
+    
     //gets all users who are members of the given party
     function get_party_members($party_id = null) {
         
@@ -574,11 +639,11 @@ class WPWeddings {
         return new WP_User_Query("meta_key=_wedding_party&meta_value=$party_id");
     }
     
-    
 }
 
 function start_wp_weddings() {
-    $w = new WPWeddings();
+    global $wedding;
+    $wedding = new WPWeddings();
 }
 
 
