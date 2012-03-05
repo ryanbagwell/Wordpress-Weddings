@@ -1,17 +1,4 @@
-<?php
-
-get_header();
-
-
-
-// echo "<pre>";
-// var_dump($wedding->party);
-// echo "</pre>";
-// die();
-// 
-// var_dump();
-
-?>
+<?php get_header(); ?>
 
 <div id="content" class="rsvp">
 
@@ -33,10 +20,11 @@ get_header();
     <?php $guests = $wedding->party->guests; ?>
 
     <table>
-    <?php require_once(dirname(__FILE__).'/_guest_form_fields.php'); ?>
+        <?php require_once(dirname(__FILE__).'/_guest_form_fields.php'); ?>
     </table>
 
-    <h3>All Done? <a href="/rsvp/login/">Click here to Log Out</a></h3>
+    <h3 style="text-align: right;">All Done? <a href="/rsvp/logout/">Click here to Log Out</a></h3>
+    
     <input type="hidden" name="token" value="<?php echo $wedding->party->_guest_party_token; ?>" />
     
     <script type="text/javascript" src="<?php echo plugins_url('/js/ajax-update.js',dirname(__FILE__).'../'); ?>"></script>    

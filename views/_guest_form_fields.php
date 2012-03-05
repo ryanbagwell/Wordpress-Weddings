@@ -6,7 +6,7 @@
             <th>Email</th>
             <th>Attending?</th>
             <th>
-                Family Gathering?
+                Sunday Gathering?
                 <a href="" target="_blank">(What's this?)</a>
             </th>            
         </tr>
