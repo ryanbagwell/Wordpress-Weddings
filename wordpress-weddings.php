@@ -591,12 +591,12 @@ class WPWeddings {
             'meta_query'=>array(
                 array(
                     'key'=>'_guest_party_token',
-                    'value'=>$code
+                    'value'=>$reservation_code
                     ),
             ),
             'post_type'=>'wedding_guests',
         ));
-                
+
         if (count($query->posts) === 0)
             return false;
         
