@@ -43,6 +43,7 @@ class WPWeddings {
         
         add_action('wp_ajax_rsvp_update', array($this,'rsvp_update'));
         add_action('wp_ajax_nopriv_rsvp_update', array($this,'rsvp_update'));
+        add_action('wp_ajax_nopriv_add_guest', array($this,'add_new_guest'));
         
         wp_enqueue_script('form-labels',plugins_url('js/',__FILE__).'jquery.setFieldTitles.js','jquery',null,true);
         
@@ -132,7 +133,7 @@ class WPWeddings {
               
         add_meta_box('mailing-address','Mailing Address',array('WPWeddings','print_address_meta_box'),'wedding_guests','normal');              
 
- add_meta_box('guests',"Guests",array('WPWeddings','print_guests_meta_box'),'wedding_guests','normal'); 
+ add_meta_box('guests',"Guests",array($this,'print_guests_meta_box'),'wedding_guests','normal'); 
         
     }
     
@@ -144,10 +145,8 @@ class WPWeddings {
 
     function print_guests_meta_box() {
         global $post, $wpdb;
-        
-        $sql = "SELECT user_id FROM $wpdb->prefix"."usermeta WHERE meta_key = '_wedding_party' AND meta_value = '$post->ID'";
-        
-        $guests = $wpdb->get_results($sql);
+                
+        $guests = $this->get_guests($post->ID)->results; 
 
         require_once(dirname(__FILE__).'/inc/guests-meta-box.php');
 
@@ -550,8 +549,8 @@ class WPWeddings {
 
     function login() {
    
-        // if (isset($_SESSION['reservation_code']))
-        //     wp_redirect(site_url().'/rsvp/respond/');
+        if (isset($_SESSION['reservation_code']))
+            wp_redirect(site_url().'/rsvp/respond/');
    
         $_SESSION['message'] = '';
    
@@ -581,9 +580,6 @@ class WPWeddings {
     
     function get_party_details($reservation_code = '') {
         
-        // var_dump($reservation_code);
-        // die();
-        
         if ($reservation_code == '')
             return false;
 
@@ -610,22 +606,30 @@ class WPWeddings {
         foreach($fields as $field) {
             $details->$field = get_post_meta($query->posts[0]->ID,$field,true);
         }
-                
-        $members = new WP_User_Query("meta_key=_wedding_party&meta_value=$details->ID");
-         
-        foreach($members->results as $member) { 
-            
-            foreach(get_userdata($member->ID) as $key=>$value) {
-                $member->$key = $value;
-            }
- 
-        }
-                              
-        $details->guests = $members->results;
+                                                         
+        $details->guests = $this->get_guests($details->ID)->results;  
     
         return $details;
         
     }
+    
+    
+    //gets all guests assigned to the given party
+    function get_guests($party_id) {
+        
+        $guests = new WP_User_Query("meta_key=_wedding_party&meta_value=$party_id");
+                 
+        foreach($guests->results as $guest) { 
+            
+            foreach(get_userdata($guest->ID) as $key=>$value) {
+                $guest->$key = $value;
+            }
+ 
+        }
+        
+        return $guests;     
+    }
+    
 
     function respond() {
                 
@@ -654,7 +658,6 @@ class WPWeddings {
         extract($_POST);
         
         $result = update_user_meta($id,$name,$value);
-        // var_dump($value);
         
         if (!$result)
             die('error');
@@ -662,7 +665,7 @@ class WPWeddings {
         die('ok');
         
     }
-        
+            
 }
 
 function start_wp_weddings() {

@@ -5,37 +5,24 @@
 <tr><td>No guests found.</td></tr>
 
 <?php else:
-foreach($guests as $guest):
-    $guest = get_userdata($guest->user_id); ?>
-        <tr>
-        <td><?php echo $guest->user_title; ?></td>
-        <td><?php echo $guest->first_name; ?></td>
-        <td><?php echo $guest->last_name; ?></td>
-        <td><?php echo $guest->user_email; ?></td>
-        </tr>
-<?php endforeach; ?>
 
+    require_once(dirname(__FILE__).'/../views/_guest_form_fields.php'); ?>
+    
 <?php endif; ?>
 
 </table>
 
-<div class="field-wrapper add-guest-form">    
-    <select name="_new_guest_title-1">
-        <option value="">---</option>
-        <option value="Mr.">Mr.</option>
-        <option value="Mrs.">Mrs.</option>
-        <option value="Ms.">Ms.</option>
-        <option value="Miss">Miss</option>
-        <option value="Master">Master</option>
-    </select>
-
-    <input type="text" class="new" rel="First Name" name="_new_guest_first_name-1" value="First Name" />
-    <input type="text" class="new" rel="Last Name" name="_new_guest_last_name-1" value="Last Name" />
-    <input type="text" class="new" rel ="Email" name="_new_guest_email-1" value="Email" />
-</div>
-
-
-
-
-
-
+<script type="text/javascript" src="<?php echo plugins_url('/js/ajax-update.js',dirname(__FILE__).'../'); ?>"></script>    
+<script type="text/javascript">
+    jQuery(document).ready(function($) {
+        $('.weddings-list input').rsvp();
+        $('<span />').addClass('updated').css({
+            'display':'none',
+            'color':'green',
+            'font-size':'12px',
+            'float':'right',
+            
+        }).appendTo('#guests h3');
+        
+    });
+</script>

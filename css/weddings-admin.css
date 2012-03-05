@@ -50,3 +50,19 @@
   width: 100%;
   line-height: 25px;
 }
+
+  .weddings-list td {
+    text-align: center;
+  }
+  
+  .weddings-list td input {  
+    
+  }
+  
+  .weddings-list th {
+    font-weight: normal;
+  }
+  
+    .weddings-list th a {
+      display: none;
+    }
