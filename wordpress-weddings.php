@@ -277,12 +277,11 @@ class WPWeddings {
         
         $new_columns = array(
             'title' => 'Name',
-            'guests' => 'Guests',
+            'guests' => 'Guests Attending',
             'address' => 'Address',
             'city' => 'City',
             'state' => 'State',
             'zip' => 'ZIP',
-            'email' => 'Email',
         );
             
         return array_merge($columns,$new_columns);
@@ -306,10 +305,30 @@ class WPWeddings {
         
         if ($name == 'guests') {
             
-            $sql = "SELECT count(meta_key) as count FROM $wpdb->prefix"."usermeta WHERE meta_key = '_wedding_party' AND meta_value = '$post->ID'";
-
-            $guests = $wpdb->get_results($sql);
-            echo $guests[0]->count;
+            $attending = 0;
+            $no_rsvp = 0;
+            
+            $guests = new WP_User_Query(array(
+                'meta_key' => '_wedding_party',
+                'meta_value' => $post->ID,
+                'fields'=>'all_with_meta'
+            ));
+            
+            foreach($guests->results as $result) {
+                if ($result->_attending_wedding == '1') {
+                    $attending++;
+                } else {
+                   $no_rsvp++; 
+                }
+                
+            }
+            
+            echo "$attending/".count($guests);
+            if ($no_rsvp == 1) {
+                echo "<div style='color: red;'>1 hasn't responded</div>";
+            } elseif ($no_rsvp > 1) {
+                echo "<div style='color: red;'>$no_rsvp haven't responded</div>";
+            }
             
         }
             
