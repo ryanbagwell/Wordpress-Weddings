@@ -323,7 +323,8 @@ class WPWeddings {
                 
             }
             
-            echo "$attending/".count($guests);
+            echo "$attending/".count($guests->results);
+            
             if ($no_rsvp == 1) {
                 echo "<div style='color: red;'>1 hasn't responded</div>";
             } elseif ($no_rsvp > 1) {
