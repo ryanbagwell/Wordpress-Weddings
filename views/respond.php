@@ -18,10 +18,8 @@
 
 <form method="post" action="/rsvp/respond/" id="rsvp-form">
     <?php $guests = $wedding->party->guests; ?>
-
-    <table>
-        <?php require_once(dirname(__FILE__).'/_guest_form_fields.php'); ?>
-    </table>
+    
+    <?php require_once(dirname(__FILE__).'/guests_table.php'); ?>
 
     <h3 style="text-align: right;">All Done? <a href="/rsvp/logout/">Click here to Log Out</a></h3>
     

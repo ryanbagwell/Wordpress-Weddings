@@ -55,6 +55,10 @@
     text-align: center;
   }
   
+  .weddings-list td.remove {
+    cursor: pointer;
+  }
+  
   .weddings-list td input {  
     
   }

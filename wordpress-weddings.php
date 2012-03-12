@@ -45,6 +45,8 @@ class WPWeddings {
         add_action('wp_ajax_nopriv_rsvp_update', array($this,'rsvp_update'));
         add_action('wp_ajax_nopriv_add_guest', array($this,'add_new_guest'));
         
+        add_action('wp_ajax_remove_guest', array($this,'remove_guest'));
+        
         wp_enqueue_script('form-labels',plugins_url('js/',__FILE__).'jquery.setFieldTitles.js','jquery',null,true);
         
         //an array of party meta fields
@@ -148,7 +150,7 @@ class WPWeddings {
                 
         $guests = $this->get_guests($post->ID)->results; 
 
-        require_once(dirname(__FILE__).'/inc/guests-meta-box.php');
+        require_once(dirname(__FILE__).'/views/guests_table.php');
 
         echo "<div class='field-wrapper'><a id='add-guest-link'>add a guest</a></div>";
 
@@ -197,19 +199,18 @@ class WPWeddings {
                 
     }
 
-    function create_user($i) {
+    function create_user($email='',$first_name = '',$last_name = '') {
         
-        $username = $this->get_username($_POST["_new_guest_first_name-$i"],$_POST["_new_guest_last_name-$i"]);
-                        
+        $username = $this->get_username($first_name,$last_name);
+        
         $password = $this->get_random_string(10);
         
-        if ($_POST["_new_guest_email-$i"] == '') {
+        if ($email == '') {
             $email = "$username@nothing.com";
-        } else {
-            $email = $_POST["_new_guest_email-$i"];
         }
-            
         
+        
+            
         return wp_insert_user(array(
             'user_login' => $username, 
             'user_pass' => $password,
@@ -557,9 +558,6 @@ class WPWeddings {
         
         if ($_POST):
             $code = $_POST['reservation_code'];
-
-            // var_dump($this->get_party_details($code));
-            // die();
             
             if ($this->get_party_details($code)) {
                 $_SESSION['reservation_code'] = $code;
@@ -577,6 +575,7 @@ class WPWeddings {
         endif;
     
     }
+    
     
     function get_party_details($reservation_code = '') {
         
@@ -612,8 +611,7 @@ class WPWeddings {
         return $details;
         
     }
-    
-    
+        
     //gets all guests assigned to the given party
     function get_guests($party_id) {
         
@@ -646,23 +644,60 @@ class WPWeddings {
         wp_redirect(site_url().'/rsvp/login/');
         
     }
+
+    function remove_guest() {
+        
+        extract($_POST);
+        
+        $result = update_user_meta($id,'_wedding_party',$id);
+        
+        if ($result)
+            die("removed");
+            
+        die();
+        
+    }
     
     function rsvp_update() {
+        
+        extract($_POST);
         
         if (!$_POST)
             die('error');
             
-        if (!$_SESSION['reservation_code'])
+        if (!$_SESSION['reservation_code'] && !is_user_logged_in())
             die('not logged in');
+
+        if ($id == '' && !is_user_logged_in())
+            die('not authorized to create a new user');
+        
+        if ($id == '' && is_user_logged_in()) {
+            $id = $this->create_user($email,$first_name,$last_name);
+        } 
             
-        extract($_POST);
+        $update_fields = array(
+            'first_name',
+            'last_name',
+            'email',
+            '_attending_wedding',
+            '_attending_dinner',
+            '_wedding_party'
+        );
         
-        $result = update_user_meta($id,$name,$value);
+        $response = array();
         
-        if (!$result)
-            die('error');
+        foreach ($update_fields as $field) {
+            
+            $result = update_user_meta($id,$field,$_POST[$field]);
+            
+            if ($result)
+                $response[$field] = "updated";
+            
+        }
         
-        die('ok');
+        $response['id'] = $id;
+
+        die(json_encode($response));
         
     }
             

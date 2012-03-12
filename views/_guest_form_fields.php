@@ -1,6 +1,10 @@
+<table class="weddings-list">
 
     <thead>
         <tr>
+            <?php if (is_admin() && is_user_logged_in()): ?>
+            <td></td>
+            <?php endif; ?>            
             <th>First Name</th>
             <th>Last Name</th>
             <th>Email</th>
@@ -11,35 +15,21 @@
             </th>            
         </tr>
     </thead>
-    <tbody>
-
-<?php
-foreach ($guests as $guest):
-
-    //check for a dummy email address
-    if (stripos($guest->user_email,'nothing') !== false) {
-        $email = '';
+    <tbody data-party="<?php echo $post->ID; ?>">
+        
+    <?php
+    if (count($guests) > 0) {
+        foreach ($guests as $guest):
+            $wedding->print_guest_row($guest,true);
+        endforeach;
     } else {
-        $email = $guest->user_email;
+        $colcount = (is_user_logged_in())?'6':'5';
+        echo "<tr><td colspan='$colcount'></td></tr>";
+        
+        if (is_admin())
+        $this->print_guest_row(new StdClass(),true);
     }
+
     ?>
-    <tr data-id="<?php echo $guest->ID; ?>">
-        <td class="first-name">
-            <input class="first-name" type="text" name="first_name" value="<?php echo $guest->first_name ?>" title="" rel="First Name" />
-        </td>
-        <td class="last-name">
-            <input class="last-name" type="text" name="last_name" value="<?php echo $guest->last_name ?>" title="" rel="Last Name" />
-        </td>
-        <td class="email">
-            <input class="email" type="text" name="email" value="<?php echo $email ?>" title="" rel="Email" />
-        </td>
-        <td class="attending-wedding">
-            <input class="attending-wedding" type="checkbox" name="_attending_wedding" value="0" rel="Wedding attendance" <?php echo ($guest->_attending_wedding === '1')?'checked="checked"':''; ?> />
-        </td>
-        <td class="attending-dinner">
-            <input class="attending-dinner" type="checkbox" name="_attending_dinner" value="0" rel="Dinner attendance" <?php echo ($guest->_attending_dinner === '1')?'checked="checked"':''; ?> />
-        </td>            
-    </tr>
-    
-<?php endforeach; ?>
-</tbody>
+    </tbody>
+</table>
