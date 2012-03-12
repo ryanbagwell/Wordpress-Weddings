@@ -10,8 +10,8 @@
             <th>Email</th>
             <th>Attending?</th>
             <th>
-                Sunday Gathering?
-                <a href="" target="_blank">(What's this?)</a>
+                Sunday Pregame?
+                <a href="/pregame-gathering/" target="_blank">(What's this?)</a>
             </th>            
         </tr>
     </thead>

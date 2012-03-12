@@ -540,7 +540,10 @@ class WPWeddings {
     }
     
     function view($template) {
+        global $wp_query;
         
+        $wp_query->is_404 = false;
+                
         if (!is_null($this->template))
             return dirname(__FILE__)."/views/$this->template.php";
         

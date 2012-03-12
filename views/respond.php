@@ -16,7 +16,8 @@
 
 <h3>Tell us who will be attending:<span class="updated" style="display: none;">Updated!</span></h3>
 
-<form method="post" action="/rsvp/respond/" id="rsvp-form">
+<div id="rsvp-form">
+
     <?php $guests = $wedding->party->guests; ?>
     
     <?php require_once(dirname(__FILE__).'/guests_table.php'); ?>
@@ -32,7 +33,7 @@
         });
     </script>
     
-</form>
+</div>
 
 </div><!-- content -->
 
