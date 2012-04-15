@@ -306,6 +306,7 @@ class WPWeddings {
         if ($name == 'guests') {
             
             $attending = 0;
+			$not_attending = 0;
             $no_rsvp = 0;
             
             $guests = new WP_User_Query(array(
@@ -317,23 +318,20 @@ class WPWeddings {
             foreach($guests->results as $result) {
                 if ($result->_attending_wedding == '1') {
                     $attending++;
-                } else {
+                } elseif ($result->_attending_wedding == '0') {
+					$not_attending++;
+				} else {
                    $no_rsvp++; 
                 }
-                
-            }
+           	}
             
             echo "$attending/".count($guests->results);
             
-            if ($no_rsvp == 1) {
-                echo "<div style='color: red;'>1 hasn't responded</div>";
-            } elseif ($no_rsvp > 1) {
-                echo "<div style='color: red;'>$no_rsvp haven't responded</div>";
-            }
+			if ($no_rsvp > 0) 
+				echo "<div style='color: red;'>" . (($no_rsvp == 1)?1:$no_rsvp) . " haven't responded</div>";
             
         }
-            
-        
+
     }
     
     
