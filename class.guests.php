@@ -9,11 +9,11 @@ class WeddingGuest extends WP_User {
 	function WeddingGuest($id = null) {
 		
 		parent::__construct($id);
-		
-		// $this->$attending_wedding = get_user_meta($this->ID,'_attending_wedding',true);
-		// $this->$attending_dinner = get_user_meta($this->ID,'_attending_wedding',true);
-		// $this->has_respnded = ($this->attending_wedding || $this->attending_dinner);
-		// 	
+	
+		$this->attending_wedding = (bool) get_user_meta($this->ID,'_attending_wedding',true);
+		$this->attending_dinner = (bool) get_user_meta($this->ID,'_attending_dinner',true);
+		$this->has_responded = (bool) ($this->_attending_wedding == '1' || $this->_attending_wedding == '0' || $this->_attending_dinner == '1' || $this->_attending_dinner == '0');
+
 	}
 	
 }
@@ -42,14 +42,14 @@ class GuestParty extends WP_User_Query {
 		
 			if ($user->_attending_wedding == '1')
 				$this->attending_wedding++;
-				
+			
 			if ($user->_attending_dinner == '1')
 				$this->attending_dinner++;
 			
-			if ($user->_attending_wedding || $user->_attending_dinner)
+			if ($user->has_responded)
 				$this->num_responded++;
+	
 		};
-
 		
 		$this->guests = $this->results;
 
