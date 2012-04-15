@@ -11,6 +11,8 @@ License: GPL2
 
 $wedding = null;
 
+require_once('class.guests.php');
+
 class WPWeddings {
 	
 	public $token_length = 6;
@@ -59,10 +61,10 @@ class WPWeddings {
             '_guest_party_email',      
         );
         
-        $this->export_guests();
+		$this->parties = new GuestParties();
         
-        
-          
+		$this->export_guests();
+
 	}
 	
 
@@ -133,7 +135,7 @@ class WPWeddings {
  
     function include_meta_box() {
               
-        add_meta_box('mailing-address','Mailing Address',array('WPWeddings','print_address_meta_box'),'wedding_guests','normal');              
+        add_meta_box('mailing-address','Mailing Address',array($this,'print_address_meta_box'),'wedding_guests','normal');              
 
  add_meta_box('guests',"Guests",array($this,'print_guests_meta_box'),'wedding_guests','normal'); 
         
@@ -141,14 +143,15 @@ class WPWeddings {
     
     function print_address_meta_box() {
         global $post;
+
         require_once(dirname(__FILE__).'/inc/address-meta-box.php');
     }
 
 
     function print_guests_meta_box() {
         global $post, $wpdb;
-                
-        $guests = $this->get_guests($post->ID)->results; 
+
+		$guests = $this->parties->get($post->ID)->guests->guests;
 
         require_once(dirname(__FILE__).'/views/guests_table.php');
 
@@ -277,7 +280,10 @@ class WPWeddings {
         
         $new_columns = array(
             'title' => 'Name',
-            'guests' => 'Guests Attending',
+			'total' => 'Total',
+            'attending_wedding' => 'Attending Wedding',
+            'attending_dinner' => 'Attending Dinner',
+			'no_response' => 'No Response',
             'address' => 'Address',
             'city' => 'City',
             'state' => 'State',
@@ -291,46 +297,34 @@ class WPWeddings {
 
     function add_list_view_column_values($name) {
         global $post,$wpdb;
-        
+
+		$party = $this->parties->get($post->ID);
+		
         $values = array(
             'address' => '_guest_party_address1',
             'city' => '_guest_party_city',
             'state' => '_guest_party_state',
             'zip' => '_guest_party_zip',
             'email'=>'_guest_party_email',
-        );
+       	);
         
         if (array_key_exists($name,$values))
             echo get_post_meta($post->ID,$values[$name],true);
+
+		if ($name == 'total')
+			echo $party->guests->num_guests;
         
-        if ($name == 'guests') {
-            
-            $attending = 0;
-			$not_attending = 0;
-            $no_rsvp = 0;
-            
-            $guests = new WP_User_Query(array(
-                'meta_key' => '_wedding_party',
-                'meta_value' => $post->ID,
-                'fields'=>'all_with_meta'
-            ));
-            
-            foreach($guests->results as $result) {
-                if ($result->_attending_wedding == '1') {
-                    $attending++;
-                } elseif ($result->_attending_wedding == '0') {
-					$not_attending++;
-				} else {
-                   $no_rsvp++; 
-                }
-           	}
-            
-            echo "$attending/".count($guests->results);
-            
-			if ($no_rsvp > 0) 
-				echo "<div style='color: red;'>" . (($no_rsvp == 1)?1:$no_rsvp) . " haven't responded</div>";
-            
-        }
+		if ($name == 'attending_wedding')
+			echo $party->guests->attending_wedding;
+			
+		if ($name == 'attending_dinner')
+			echo $party->guests->attending_wedding;
+			
+		if ($name == 'no_response') {
+			$no_response = $party->guests->num_guests - $party->guests->num_responded;
+			$color = ($no_response > 0)?'red':'';
+			echo "<span style='color: $color'>$no_response</span>";
+		}
 
     }
     
@@ -408,14 +402,14 @@ class WPWeddings {
         
     }
 
+
+
     
     function export_guests() {
         global $wpdb;
-        
-        
+
         if ($_REQUEST['page'] != 'export-guests')
             return;
-        
         
         //add the categories to the column names
         $column_headings = array(
@@ -426,8 +420,11 @@ class WPWeddings {
             'State',
             'ZIP',
             'Email',
-            'RSVP Names',
+            'Mailing Names',
             'Guest Count',
+			'Attending Wedding',
+			'Attending Dinner',
+			'No RSVP',
             'Login Token',    
         );
                 
@@ -441,89 +438,55 @@ class WPWeddings {
         $headings = implode($column_headings,'","');
         
         $csv = "\"$headings\"\n";
-        
-        
-        //get all wedding parties using a custom query to count the guests in each party
-        
-        $sql = "SELECT p.*,
-            (
-            SELECT 
-                GROUP_CONCAT(
-                    (SELECT TRIM(meta_value) 
-                        FROM $wpdb->prefix"."usermeta 
-                        WHERE meta_key = 'first_name' 
-                        AND user_id = um.user_id
-                    ) separator ','
-                ) as first_name 
-                FROM $wpdb->prefix"."usermeta um
-                WHERE meta_key = '_wedding_party' 
-                AND meta_value = p.ID 
-            ) as first_names, 
-            (
-            SELECT COUNT(umeta_id) 
-            FROM $wpdb->prefix"."usermeta um 
-            WHERE  um.meta_key = '_wedding_party' 
-            AND um.meta_value = p.ID  
-            ) as guest_count             
-               
-        FROM $wpdb->prefix"."posts as p 
-        WHERE post_type = 'wedding_guests' 
-        AND post_status = 'publish'";
-        
-        $parties = $wpdb->get_results($sql);
-                
-        //a placeholder to hold our total guest count
-        $total_guests = 0;
 
         //assign the post meta to each party
-        foreach($parties as $party) {
+        foreach($this->parties->parties as $party) {
 
-            $total_guests += $party->guest_count;
-
-            $details = array($party->post_title);
+			$line = array($party->post_title);
 
             foreach($this->party_fields as $field) {
-                $party->$field = get_post_meta($party->ID,$field,true);
-                $details[] = $party->$field;
+                $line[] = get_post_meta($party->ID,$field,true);
             }
             
             //add the first_names field
             $names = explode(',',$party->first_names); 
             
             if (count($names) > 2):
-                $details[] = implode(', ',array_slice($names,0,count($names)-1)) . ' and ' . $names[count($names) - 1];
+                $line[] = implode(', ',array_slice($names,0,count($names)-1)) . ' and ' . $names[count($names) - 1];
             elseif (count($names) == 2):
-                $details[] = implode(' and ',$names);
+                $line[] = implode(' and ',$names);
             elseif (count($names) === 1):
-                $details[] = $names[0];
+                $line[] = $names[0];
             else:
-                $details[] = '';
+                $line[] = '';
             endif;
-            
-            //also add the guest count and token
-            $details[] = $party->guest_count;
-            $details[] = get_post_meta($party->ID,'_guest_party_token',true);
+
+            $line[] = $party->guests->num_guests;
+            $line[] = $party->guests->attending_wedding;
+            $line[] = $party->guests->attending_dinner;
+            $line[] = $party->guests->num_guests - $party->guests->num_responded;
+            $line[] = get_post_meta($party->ID,'_guest_party_token',true);
                                     
             //add the category data too
             foreach($categories as $cat) {
                 if (has_term($cat->term_id,'wedding-groups',$party->ID)):
-                    $details[] = "X";
+                    $line[] = "X";
                 else:
-                    $details[] = "";
+                    $line[] = "";
                 endif;
             
             }
             
-            $details = implode($details,'","');
-            $csv .= "\"$details\"\n";
+            $line = implode($line,'","');
+            $csv .= "\"$line\"\n";
             
         }
-        
+
         //total the guest count
         $csv .= "\n";
-        $csv .= "\"Total Parties\",\"".count($parties)."\"\n";
-        $csv .= "\"Total Guests\",\"$total_guests\"\n";
-        
+        $csv .= "\"Total Guests\",\"".$this->parties->total_guests."\"\n";
+        $csv .= "\"Attending Wedding\",\"".$this->parties->attending_wedding."\"\n";
+        $csv .= "\"Attending Dinner\",\"".$this->parties->attending_dinner."\"\n";
         
         header("Content-type: application/octet-stream");
         header("Content-Disposition: attachment; filename=\"guest-parties.csv\"");

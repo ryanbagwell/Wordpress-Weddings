@@ -1,5 +1,4 @@
 <table class="weddings-list">
-
     <thead>
         <tr>
             <?php if (is_admin() && is_user_logged_in()): ?>
@@ -16,7 +15,7 @@
         </tr>
     </thead>
     <tbody data-party="<?php echo (is_admin())?$post->ID:$wedding->party->ID; ?>">
-        
+     
     <?php
     if (count($guests) > 0) {
         foreach ($guests as $guest):
@@ -34,6 +33,7 @@
     ?>
     </tbody>
 </table>
+
 
 <script type="text/javascript" src="<?php echo plugins_url('/js/ajax-update.js',dirname(__FILE__).'../'); ?>"></script>    
 <script type="text/javascript">
